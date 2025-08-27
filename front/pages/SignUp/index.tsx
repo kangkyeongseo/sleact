@@ -1,10 +1,13 @@
 import React, { useCallback, useState } from 'react';
 import useInput from '@hooks/useInput';
 import axios from 'axios';
-import { Link } from 'react-router';
+import useSWR from 'swr';
+import fetcher from '@utils/fetcher';
+import { Link, Navigate } from 'react-router';
 import { Success, Form, Error, Label, Input, LinkContainer, Button, Header } from './styles';
 
 const SingUp = () => {
+  const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher, { dedupingInterval: 2000 });
   const [email, onChangeEmail] = useInput('');
   const [nickname, onChangeNickname] = useInput('');
   const [password, , setPassword] = useInput('');
@@ -53,6 +56,14 @@ const SingUp = () => {
     },
     [email, nickname, password, passwordCheck, missmatchError],
   );
+
+  if (data === undefined) {
+    return <div>loading...</div>;
+  }
+
+  if (data) {
+    return <Navigate to="/workspace/channel" />;
+  }
 
   return (
     <div id="container">

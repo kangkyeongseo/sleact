@@ -3,11 +3,11 @@ import useSWR from 'swr';
 import axios from 'axios';
 import useInput from '@hooks/useInput';
 import fetcher from '@utils/fetcher';
-import { Link } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import { Button, Error, Form, Header, Input, Label, LinkContainer } from '@pages/SignUp/styles';
 
 const Login = () => {
-  const { data, error, isLoading } = useSWR('http://localhost:3095/api/users', fetcher);
+  const { data, error, mutate } = useSWR('http://localhost:3095/api/users', fetcher, { dedupingInterval: 2000 });
   const [logInError, setLogInError] = useState(false);
   const [email, onChangeEmail] = useInput('');
   const [password, onChangePassword] = useInput('');
@@ -18,12 +18,24 @@ const Login = () => {
       setLogInError(false);
       axios
         .post('http://localhost:3095/api/users/login', { email, password }, { withCredentials: true })
-        .then(() => {})
-        .catch(() => {})
+        .then((response) => {
+          mutate(response.data, false);
+        })
+        .catch((error) => {
+          setLogInError(error.response.status === 401);
+        })
         .finally(() => {});
     },
-    [email, password],
+    [email, password, mutate],
   );
+
+  if (data === undefined) {
+    return <div>loading...</div>;
+  }
+
+  if (data) {
+    return <Navigate to="/workspace/channel" />;
+  }
 
   return (
     <div id="container">
