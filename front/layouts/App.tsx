@@ -2,7 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
 
 const Login = lazy(() => import('@pages/Login'));
-const SingUp = lazy(() => import('@pages/SingUp'));
+const SingUp = lazy(() => import('@pages/SignUp'));
 
 const App = () => {
   return (
