@@ -30,6 +30,8 @@ import CreateChannelModal from '@components/CreateChannelModal';
 import { useParams } from 'react-router';
 import InviteWorkspaceModal from '@components/InviteWorkspaceModal';
 import InviteChannelModal from '@components/InviteChannelModal';
+import ChannelList from '@components/ChannelList';
+import DMList from '@components/DMList';
 
 const Workspace = () => {
   const { workspace } = useParams<{ workspace: string }>();
@@ -161,9 +163,8 @@ const Workspace = () => {
                 <button onClick={onLogout}>로그아웃</button>
               </WorkspaceModal>
             </Menu>
-            {channelData?.map((channel) => (
-              <div key={channel.id}>{channel.name}</div>
-            ))}
+            <ChannelList />
+            <DMList />
           </MenuScroll>
         </Channels>
         <Chats>
