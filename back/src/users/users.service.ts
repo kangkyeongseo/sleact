@@ -19,6 +19,10 @@ export class UsersService {
     private dataSource: DataSource,
   ) {}
 
+  async findByEmail(email: string) {
+    return this.userRepository.findOne({ where: { email }, select: ['id', 'email', 'password'] });
+  }
+
   async join(email: string, nickname: string, password: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
