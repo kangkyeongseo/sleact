@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import useSWR from 'swr';
 import fetcher from '@utils/fetcher';
 import axios from 'axios';
@@ -32,21 +32,27 @@ import InviteWorkspaceModal from '@components/InviteWorkspaceModal';
 import InviteChannelModal from '@components/InviteChannelModal';
 import ChannelList from '@components/ChannelList';
 import DMList from '@components/DMList';
+import useSocket from '@hooks/useSocket';
 
 const Workspace = () => {
   const { workspace } = useParams<{ workspace: string }>();
+  if (!workspace) return;
 
-  const {
-    data: useData,
-    error,
-    mutate,
-  } = useSWR<IUser | false>('http://localhost:3095/api/users', fetcher, {
-    dedupingInterval: 2000,
-  });
-  const { data: channelData } = useSWR<IChannel[]>(
-    useData ? `http://localhost:3095/api/workspaces/${workspace}/channels` : null,
-    fetcher,
-  );
+  const { data: userData, mutate } = useSWR<IUser | false>('/api/users', fetcher);
+  const { data: channelData } = useSWR<IChannel[]>(userData ? `/api/workspaces/${workspace}/channels` : null, fetcher);
+  const [socket, disconnect] = useSocket(workspace);
+
+  useEffect(() => {
+    if (userData && channelData && socket) {
+      socket.emit('login', { id: userData.id, channels: channelData.map((channel) => channel.id) });
+    }
+  }, [userData, channelData, socket]);
+
+  useEffect(() => {
+    return () => {
+      disconnect();
+    };
+  }, [workspace, disconnect]);
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false);
@@ -59,7 +65,7 @@ const Workspace = () => {
 
   const onLogout = () => {
     axios
-      .post('http://localhost:3095/api/users/logout', null, { withCredentials: true })
+      .post('/api/users/logout', null, { withCredentials: true })
       .then((response) => {
         mutate(false, false);
       })
@@ -87,11 +93,7 @@ const Workspace = () => {
       if (!newWorkspace || !newWorkspace.trim()) return;
       if (!newUrl || !newUrl.trim()) return;
       axios
-        .post(
-          'http://localhost:3095/api/workspaces',
-          { workspace: newWorkspace, url: newUrl },
-          { withCredentials: true },
-        )
+        .post('/api/workspaces', { workspace: newWorkspace, url: newUrl }, { withCredentials: true })
         .then(() => {
           mutate();
           setShowCreateWorkspaceModal(false);
@@ -118,7 +120,7 @@ const Workspace = () => {
     setShowInviteWorkspaceModal(true);
   }, []);
 
-  if (!useData) {
+  if (!userData) {
     return <Navigate to="/login" />;
   }
 
@@ -127,13 +129,13 @@ const Workspace = () => {
       <Header>
         <RightMenu>
           <span onClick={onClickUserProfile}>
-            <ProfileImg src={gravatar.url(useData.nickname, { s: '28px', d: 'retro' })} alt={useData.nickname} />
+            <ProfileImg src={gravatar.url(userData.nickname, { s: '28px', d: 'retro' })} alt={userData.nickname} />
           </span>
           <Menu style={{ right: 0, top: 38 }} show={showUserMenu} onCloseModal={onClickUserProfile}>
             <ProfileModal>
-              <img src={gravatar.url(useData.nickname, { s: '28px', d: 'retro' })} alt={useData.nickname} />
+              <img src={gravatar.url(userData.nickname, { s: '28px', d: 'retro' })} alt={userData.nickname} />
               <div>
-                <span id="profile-name">{useData.nickname}</span>
+                <span id="profile-name">{userData.nickname}</span>
                 <span id="profile-active">Active</span>
               </div>
             </ProfileModal>
@@ -143,7 +145,7 @@ const Workspace = () => {
       </Header>
       <WorkspaceWrapper>
         <Workspaces>
-          {useData.Workspaces.map((workspace: any) => {
+          {userData.Workspaces.map((workspace: any) => {
             return (
               <Link key={workspace.id} to={`/workspace/${1}/channel/일반`}>
                 <WorkspaceButton>{workspace.name.slice(0, 1).toUpperCase()}</WorkspaceButton>

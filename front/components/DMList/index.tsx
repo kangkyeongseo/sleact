@@ -1,10 +1,11 @@
 import EachDM from '@components/EachDM';
 import { IUser, IUserWithOnline } from '@typings/db';
 import fetcher from '@utils/fetcher';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import useSWR from 'swr';
 import { CollapseButton } from './styles';
+import useSocket from '@hooks/useSocket';
 
 interface Props {
   userData: IUser;
@@ -12,6 +13,7 @@ interface Props {
 
 const DMList = () => {
   const { workspace } = useParams<{ workspace: string }>();
+  if (!workspace) return;
   const { data: userData } = useSWR<IUser>('/api/users', fetcher, {
     dedupingInterval: 2000, // 2초
   });
@@ -19,6 +21,7 @@ const DMList = () => {
     userData ? `/api/workspaces/${workspace}/members` : null,
     fetcher,
   );
+  const [socket] = useSocket(workspace);
 
   const [channelCollapse, setChannelCollapse] = useState(false);
   const [onlineList, setOnlineList] = useState<number[]>([]);
@@ -26,6 +29,16 @@ const DMList = () => {
   const toggleChannelCollapse = useCallback(() => {
     setChannelCollapse((prev) => !prev);
   }, []);
+
+  useEffect(() => {
+    socket?.on('onlineList', (data: number[]) => {
+      setOnlineList(data);
+    });
+
+    return () => {
+      socket?.off('onlineList');
+    };
+  }, [socket]);
 
   return (
     <>

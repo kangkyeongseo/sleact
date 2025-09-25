@@ -16,21 +16,25 @@ const EachChannel = ({ channel }: Props) => {
     dedupingInterval: 2000, // 2초
   });
   const date = localStorage.getItem(`${workspace}-${channel.name}`) || 0;
-  const { data: count, mutate } = useSWR<number>(
-    userData ? `/api/workspaces/${workspace}/channels/${channel.name}/unreads?after=${date}` : null,
-    fetcher,
-  );
+  // const { data: count, mutate } = useSWR<number>(
+  //   userData ? `/api/workspaces/${workspace}/channels/${channel.name}/unreads?after=${date}` : null,
+  //   fetcher,
+  // );
 
-  useEffect(() => {
-    if (location.pathname === `/workspace/${workspace}/channel/${channel.name}`) {
-      mutate(0);
-    }
-  }, [mutate, location.pathname, workspace, channel]);
+  // useEffect(() => {
+  //   if (location.pathname === `/workspace/${workspace}/channel/${channel.name}`) {
+  //     mutate(0);
+  //   }
+  // }, [mutate, location.pathname, workspace, channel]);
 
   return (
-    <NavLink key={channel.name} to={`/workspace/${workspace}/channel/${channel.name}`}>
-      <span className={count !== undefined && count > 0 ? 'bold' : undefined}># {channel.name}</span>
-      {count !== undefined && count > 0 && <span className="count">{count}</span>}
+    <NavLink
+      key={channel.name}
+      className={({ isActive }) => (isActive ? 'selected' : '')}
+      to={`/workspace/${workspace}/channel/${channel.name}`}
+    >
+      {/* <span className={count !== undefined && count > 0 ? 'bold' : undefined}># {channel.name}</span>
+      {count !== undefined && count > 0 && <span className="count">{count}</span>} */}
     </NavLink>
   );
 };
